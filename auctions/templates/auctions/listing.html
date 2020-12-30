@@ -1,0 +1,105 @@
+{% extends "auctions/layout.html" %} {% block body %}
+
+<h2> Listing: {{ listing.commodity_title }} </h2>
+
+<img src="{% if listing.URL_image %} {{ listing.URL_image }} 
+          {% else %} ../../static/default.png
+          {% endif %}" alt="listing_image" />
+
+<p> {{ listing.description }} </p>
+<h3> {{ listing.starting_price }}$ </h3>
+
+{% if watchlist %}
+    <form action="{% url 'listing' listing.id %}" method="POST">
+        {% csrf_token %}
+        <input class="btn btn-warning" 
+        type="submit" 
+        value="Remove from watchlist" 
+        name="remove_from_watchlist"> 
+    </form>
+{% else %}
+    <form action="{% url 'listing' listing.id %}" method="POST">
+        {% csrf_token %}
+        <input class="btn btn-info" 
+        type="submit"
+        value="Add to watchlist"
+        name="add_to_watchlist"> 
+    </form>
+{% endif %}
+
+{% if listing.bids.all.count == 0  %}
+    <p>No bids until now, be the first!</p>
+{% else %}    
+    <p>{{ listing.bids.all.count }} bids so far.</p>
+    {% if listing.bids.last.bidder.username == user.username %}
+        <p>Last bid is for you!</p>
+    {% else %}
+        <p>Last bid is for another user!</p>
+    {% endif %}
+{% endif %}
+
+{% if error_message %}
+    <p>{{ error_message }}</p>
+{% endif %}
+
+{% if bid_form %}
+    <form action="{% url 'listing' listing.id%}" method="POST">
+        {% csrf_token %}
+        {{ bid_form.as_p }}
+        <input class="btn btn-primary" type="submit" value="Submit!">
+    </form>
+{% else %}
+
+    {% if user.username == listing.bids.last.bidder.username %}
+        <h6>Listing is closed.</h6>
+        <h5 style="color: green;"> congratulations! You are the winner!</h5>
+    {% else %}    
+        <h6> Sorry, You can't bid because listing is closed by listing's owner </h6>
+    {% endif %}
+
+{% endif %}
+
+<h4>Details</h4>
+ <ul>
+    <li>Listed by: {{ listing.creator.username }}</li>
+    <li>Category: {{ listing.category }}</li>
+    <li>Created time: {{ listing.created_time }}</li>
+ </ul>
+
+ {% if listing.creator.username ==  user.username %}
+    {% if listing.closed == False %}
+        <form action="{% url 'listing' listing.id %}" method="POST">
+            {% csrf_token %}
+            <input class="btn btn-danger" 
+            type="submit"
+            value="Close the listing"
+            name="close_listing"> 
+        </form>
+    {% else %}
+        <input class="btn btn-danger" 
+            type="submit"
+            value="Close the listing"
+            name="close_listing"
+            disabled
+            style="cursor: default;">
+    {% endif %}
+{% endif %}
+
+<h4>comments</h4>
+
+{% if listing.comments.all.count == 0 %}
+    <p>No comments until now, be the first!</p>
+{% else %}
+    <p> {{ listing.comments.all.count }} comments so far. </p>
+    {% for comment in comments %}
+        <p>{{ comment.author.username }}: {{ comment.text }}</p>
+    {% endfor %}
+{% endif %}
+
+<form action="{% url 'listing' listing.id%}" method="POST">
+    {% csrf_token %}
+    {{ comments_form.as_p }}
+    <input class="btn btn-primary" type="submit" value="Submit!">
+</form>
+
+{% endblock %}
